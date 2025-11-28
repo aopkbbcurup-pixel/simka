@@ -1,0 +1,178 @@
+<section class="section">
+  <h1>Berita Acara Serah Terima Jaminan Kredit</h1>
+  <div class="meta">
+    <div class="meta-item">
+      <strong>Tanggal</strong><br />
+      {{formatDate custom.handover_date "DD MMMM YYYY"}}
+    </div>
+    <div class="meta-item">
+      <strong>Tempat</strong><br />
+      {{default custom.handover_place institution.branch}}
+    </div>
+    <div class="meta-item">
+      <strong>Petugas Bank</strong><br />
+      {{prepared_by.name}} ({{uppercase prepared_by.role}})
+    </div>
+    <div class="meta-item">
+      <strong>Perwakilan Nasabah</strong><br />
+      {{default custom.customer_representative_name debtor.full_name}}
+    </div>
+  </div>
+  <p>
+    Pada hari ini, {{formatDate custom.handover_date "dddd, DD MMMM YYYY"}}, bertempat di
+    {{default custom.handover_place institution.branch}}, telah dilakukan serah terima dokumen
+    jaminan kredit dari <strong>{{institution.name}}</strong> kepada
+    <strong>{{default custom.customer_representative_name debtor.full_name}}</strong> selaku
+    perwakilan nasabah dengan rincian sebagaimana diuraikan berikut.
+  </p>
+</section>
+
+<section class="section">
+  <h2>Data Kredit</h2>
+  <table>
+    <tbody>
+      <tr>
+        <th>No. Perjanjian Kredit</th>
+        <td>{{credit.contract_number}}</td>
+      </tr>
+      <tr>
+        <th>No. Rekening</th>
+        <td>{{default credit.account_number "-"}}</td>
+      </tr>
+      <tr>
+        <th>Jenis Kredit</th>
+        <td>{{credit.credit_type}}</td>
+      </tr>
+      <tr>
+        <th>Plafond</th>
+        <td>{{formatCurrency credit.plafond}}</td>
+      </tr>
+      <tr>
+        <th>Outstanding</th>
+        <td>{{formatCurrency credit.outstanding}}</td>
+      </tr>
+      <tr>
+        <th>Suku Bunga</th>
+        <td>{{credit.interest_rate}}%</td>
+      </tr>
+      <tr>
+        <th>Tenor</th>
+        <td>{{credit.tenor_months}} bulan</td>
+      </tr>
+      <tr>
+        <th>Periode Kredit</th>
+        <td>{{formatDate credit.start_date "DD MMMM YYYY"}} - {{formatDate credit.maturity_date "DD MMMM YYYY"}}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <h2>Data Debitur</h2>
+  <table>
+    <tbody>
+      <tr>
+        <th>Nama Lengkap</th>
+        <td>{{debtor.full_name}}</td>
+      </tr>
+      <tr>
+        <th>Kode Debitur</th>
+        <td>{{debtor.debtor_code}}</td>
+      </tr>
+      <tr>
+        <th>No. Identitas</th>
+        <td>{{default debtor.ktp_number "-"}}</td>
+      </tr>
+      <tr>
+        <th>Alamat Domisili</th>
+        <td>{{default debtor.address "Tidak tersedia"}}</td>
+      </tr>
+      <tr>
+        <th>Kota / Provinsi</th>
+        <td>{{debtor.city}} {{#if debtor.province}}- {{debtor.province}}{{/if}}</td>
+      </tr>
+      <tr>
+        <th>Kontak</th>
+        <td>Telp: {{default debtor.phone "-"}}, Seluler: {{default debtor.mobile "-"}}</td>
+      </tr>
+      <tr>
+        <th>Pekerjaan</th>
+        <td>{{default debtor.occupation "-"}}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <h2>Rincian Dokumen Jaminan</h2>
+  {{#if collaterals.length}}
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Kode Jaminan</th>
+          <th>Jenis / Deskripsi</th>
+          <th>Dokumen Kepemilikan</th>
+          <th>Nilai Appraisal</th>
+          <th>Lokasi Fisik</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each collaterals}}
+          <tr>
+            <td>{{inc @index}}</td>
+            <td>{{collateral_code}}</td>
+            <td>
+              {{type}}<br />
+              {{#if address}}{{address}}{{/if}}
+              {{#if land_area}}<br />Luas Tanah: {{land_area}} m<sup>2</sup>{{/if}}
+              {{#if building_area}}<br />Luas Bangunan: {{building_area}} m<sup>2</sup>{{/if}}
+              {{#if notes}}<br /><em>{{notes}}</em>{{/if}}
+            </td>
+            <td>
+              {{#if certificate_number}}No. {{certificate_number}}{{/if}}
+              {{#if certificate_date}}<br />Tanggal: {{formatDate certificate_date "DD/MM/YYYY"}}{{/if}}
+              {{#if owner_name}}<br />Atas Nama: {{owner_name}}{{/if}}
+              {{#if insurance_company}}<br />Asuransi: {{insurance_company}} ({{default insurance_policy_number "-"}}){{/if}}
+              {{#if insurance_end_date}}<br />Berlaku s/d: {{formatDate insurance_end_date "DD/MM/YYYY"}}{{/if}}
+            </td>
+            <td>{{#if appraisal_value}}{{formatCurrency appraisal_value}}{{else}}-{{/if}}</td>
+            <td>{{default physical_location "Ruang Arsip Kredit"}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    <p><strong>Total Nilai Appraisal:</strong> {{formatCurrency collateral_summary.total_appraisal_value}}</p>
+  {{else}}
+    <p>Tidak ada data jaminan yang terpilih untuk dicetak.</p>
+  {{/if}}
+</section>
+
+{{#if custom.additional_notes}}
+  <section class="section">
+    <h2>Catatan Tambahan</h2>
+    <p>{{newlineToBr custom.additional_notes}}</p>
+  </section>
+{{/if}}
+
+<section class="section">
+  <div class="signature-blocks">
+    <div class="signature-block">
+      <strong>Petugas Bank</strong><br />
+      {{institution.name}}<br />
+      <div class="signature-placeholder">
+        {{prepared_by.name}}<br />
+        {{uppercase prepared_by.role}}
+      </div>
+    </div>
+    <div class="signature-block">
+      <strong>Penerima Dokumen</strong><br />
+      Nasabah / Kuasa Nasabah<br />
+      <div class="signature-placeholder">
+        {{default custom.customer_representative_name debtor.full_name}}<br />
+        Debitur
+      </div>
+    </div>
+  </div>
+</section>
+

@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Development files
+*.log
+*.err
+dev-server.log
+dev-server.err
+output.txt
+
+# Database files
+*.sqlite
+*.sqlite3
+database/
+
+# Uploads (will be migrated to cloud storage)
+uploads/
+server/uploads/
+
+# Test files
+test_output/
+tests/
+*.test.js
+*.spec.js
+
+# macOS
+.DS_Store
+__MACOSX
+
+# Environment files (these will be set in Vercel dashboard)
+.env
+.env.local
+server/.env
+
+# Build artifacts
+client/build
+dist/
+
+# Documentation
+*.md
+!README.md
+
+# Scripts
+server/scripts/
+run-dev.bat
+monitor-server.bat
+
+# Temporary files
+tempfile_*.txt
+resolved_ip.txt

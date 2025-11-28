@@ -1,0 +1,22 @@
+{
+  "name": "simka",
+  "version": "1.0.0",
+  "description": "Sistem Informasi Manajemen Kredit & Agunan - Credit and Collateral Management System",
+  "main": "server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/server.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "setup": "npm install && npm run install-server && npm run install-client"
+  },
+  "keywords": ["banking", "credit", "collateral", "management", "indonesia"],
+  "author": "SIMKA Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.1"
+  }
+}
