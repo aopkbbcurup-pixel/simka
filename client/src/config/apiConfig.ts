@@ -7,10 +7,15 @@ const resolveBaseUrl = (): string => {
 
   if (typeof window !== 'undefined' && window.location) {
     const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:${FALLBACK_PORT}/api`;
+    // If running on localhost, use the fallback port
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:${FALLBACK_PORT}/api`;
+    }
+    // For production (Vercel), use relative path to avoid port issues
+    return '/api';
   }
 
-  return `http://localhost:${FALLBACK_PORT}/api`;
+  return '/api';
 };
 
 export const API_BASE_URL = resolveBaseUrl();
