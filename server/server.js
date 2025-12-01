@@ -138,12 +138,14 @@ app.use('*', (req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`🚀 SIMKA Server running on port ${PORT}`);
-  logger.info(`📊 Dashboard: http://localhost:${PORT}/api/health`);
-  logger.info(`🌐 Network access: http://0.0.0.0:${PORT}/api/health`);
-  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Start server only if run directly
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`🚀 SIMKA Server running on port ${PORT}`);
+    logger.info(`📊 Dashboard: http://localhost:${PORT}/api/health`);
+    logger.info(`🌐 Network access: http://0.0.0.0:${PORT}/api/health`);
+    logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = app;
