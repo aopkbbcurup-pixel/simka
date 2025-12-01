@@ -1,6 +1,6 @@
 {
-    "buildCommand": "ls -la && cd client && npm install --legacy-peer-deps && npm run build",
-    "outputDirectory": "client/build",
+    "buildCommand": "npm install --legacy-peer-deps && npm run build",
+    "outputDirectory": "build",
     "installCommand": "npm install --legacy-peer-deps",
     "framework": null,
     "rewrites": [
