@@ -7,14 +7,24 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server/server.js",
     "client": "cd client && npm start",
-    "build": "cd client && npm run build",
+    "build": "cd client && npm install && npm run build",
     "install-client": "cd client && npm install",
     "install-server": "cd server && npm install",
-    "setup": "npm install && npm run install-server && npm run install-client"
+    "setup": "npm install && npm run install-server && npm run install-client",
+    "postinstall": "cd client && npm install"
   },
-  "keywords": ["banking", "credit", "collateral", "management", "indonesia"],
+  "keywords": [
+    "banking",
+    "credit",
+    "collateral",
+    "management",
+    "indonesia"
+  ],
   "author": "SIMKA Development Team",
   "license": "MIT",
+  "dependencies": {
+    "react-scripts": "^5.0.1"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.1"
