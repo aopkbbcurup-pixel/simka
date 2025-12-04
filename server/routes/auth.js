@@ -94,15 +94,17 @@ router.post('/login', [
     const { username, password } = req.body;
 
     // Find user by username or email
+    console.log(`[AUTH DEBUG] Login attempt for: ${username}`);
     const user = await User.findOne({
       where: {
         [Op.or]: [{ username }, { email: username }]
       }
     });
 
-    console.log('DEBUG: User found in DB:', user ? user.toJSON() : null);
+    console.log('[AUTH DEBUG] User found in DB:', user ? `Yes (ID: ${user.id}, Active: ${user.is_active})` : 'No');
 
     if (!user || !user.is_active) {
+      console.log('[AUTH DEBUG] Login failed: User not found or inactive');
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials or account is inactive'
@@ -111,8 +113,10 @@ router.post('/login', [
 
     // Validate password
     const isValidPassword = await user.validatePassword(password);
-    console.log('DEBUG: Password validation result:', isValidPassword);
+    console.log('[AUTH DEBUG] Password validation result:', isValidPassword);
+
     if (!isValidPassword) {
+      console.log('[AUTH DEBUG] Login failed: Invalid password');
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'

@@ -9,20 +9,8 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads/documents');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for memory storage (for Supabase upload)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -33,7 +21,7 @@ const upload = multer({
     const allowedTypes = /jpeg|jpg|png|pdf|doc|docx/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -42,9 +30,26 @@ const upload = multer({
   }
 });
 
-// Multer for Excel file uploads
+// Multer for Excel file uploads (keep using disk storage for temp processing if needed, or switch to memory)
+// For Excel processing, memory storage is also fine if files aren't huge.
+// But existing logic uses `req.file.path` with `XLSX.readFile`. 
+// We should keep disk storage for Excel import for now to minimize changes to import logic, 
+// as it's a temporary file anyway.
+const excelStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../uploads/temp');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
 const excelUpload = multer({
-  dest: 'uploads/temp/',
+  storage: excelStorage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
@@ -58,6 +63,9 @@ const excelUpload = multer({
     }
   }
 });
+
+// Import storage service
+const { uploadFile, isSupabaseConfigured } = require('../services/storageService');
 
 // Get all collaterals with pagination and search
 router.get('/', authenticateToken, async (req, res) => {
@@ -97,7 +105,7 @@ router.get('/', authenticateToken, async (req, res) => {
         {
           model: Credit,
           required: false, // Use LEFT JOIN to always include collaterals
-          include: [{ 
+          include: [{
             model: Debtor,
             required: false, // Use LEFT JOIN for Debtor as well
           }]
@@ -108,7 +116,7 @@ router.get('/', authenticateToken, async (req, res) => {
         }
       ],
       // This is necessary for the associated query to work correctly
-      subQuery: false 
+      subQuery: false
     });
 
     res.json({
@@ -180,7 +188,7 @@ router.get('/template', authenticateToken, (req, res) => {
 // Import collaterals from Excel
 router.post('/import', authenticateToken, authorize(['admin', 'analyst']), excelUpload.single('file'), async (req, res) => {
   const cleanup = () => {
-    if (req.file) {
+    if (req.file && req.file.path) {
       fs.unlink(req.file.path, (err) => {
         if (err) console.error('File cleanup error:', err);
       });
@@ -224,17 +232,17 @@ router.post('/import', authenticateToken, authorize(['admin', 'analyst']), excel
         }
 
         const parseDate = (dateStr) => {
-            if (!dateStr) return null;
-            // Handle DD/MM/YYYY
-            const parts = String(dateStr).split('/');
-            if (parts.length === 3) {
-                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            }
-            // Handle standard date
-            const parsed = new Date(dateStr);
-            return isNaN(parsed.getTime()) ? null : parsed;
+          if (!dateStr) return null;
+          // Handle DD/MM/YYYY
+          const parts = String(dateStr).split('/');
+          if (parts.length === 3) {
+            return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+          }
+          // Handle standard date
+          const parsed = new Date(dateStr);
+          return isNaN(parsed.getTime()) ? null : parsed;
         }
-        
+
         const parseNumber = (val) => {
           if (!val) return null;
           // Remove all non-digit characters except comma for decimal
@@ -256,7 +264,7 @@ router.post('/import', authenticateToken, authorize(['admin', 'analyst']), excel
         const normalizedCollateralType = typeMap[rawCollateralType];
         const validTypes = Object.keys(typeMap);
         if (!normalizedCollateralType) {
-            throw new Error(`Jenis agunan tidak valid: "${rawCollateralType}". Pilihan: ${validTypes.join(', ')}`);
+          throw new Error(`Jenis agunan tidak valid: "${rawCollateralType}". Pilihan: ${validTypes.join(', ')}`);
         }
 
         const collateralData = {
@@ -269,7 +277,7 @@ router.post('/import', authenticateToken, authorize(['admin', 'analyst']), excel
           owner_name: row['PEMILIK_AGUNAN'],
           notes: `CIF: ${row['CIF'] || 'N/A'}; Nama Debitur (dari file): ${row['NAMA'] || 'N/A'}; Saldo Akhir (dari file): ${row['SALDO_AKHIR'] || 'N/A'}`,
         };
-        
+
         if (normalizedCollateralType === 'BPKB') {
           collateralData.bpkb_number = row['NO_SHM_BPKB'];
         }
@@ -338,6 +346,7 @@ router.get('/:id', async (req, res) => {
 
 // Create new collateral
 router.post('/', [
+  authenticateToken,
   body('credit_id').isUUID().withMessage('Valid credit ID is required'),
   body('collateral_code').notEmpty().withMessage('Collateral code is required'),
   body('type').isIn(['SHM', 'SHGB', 'SK', 'SK Berkala', 'BPKB', 'Deposito', 'Emas', 'Lainnya']).withMessage('Invalid collateral type')
@@ -373,7 +382,33 @@ router.post('/', [
       });
     }
 
-    const collateral = await Collateral.create(req.body);
+    // Sanitize input: Convert empty strings to null for numeric/date fields
+    const sanitizeData = (data) => {
+      const numericFields = [
+        'appraisal_value', 'land_area', 'building_area', 'year',
+        'insurance_value', 'tax_amount'
+      ];
+      const dateFields = [
+        'certificate_date', 'appraisal_date',
+        'insurance_start_date', 'insurance_end_date', 'tax_due_date'
+      ];
+
+      const sanitized = { ...data };
+
+      numericFields.forEach(field => {
+        if (sanitized[field] === '') sanitized[field] = null;
+      });
+
+      dateFields.forEach(field => {
+        if (sanitized[field] === '') sanitized[field] = null;
+      });
+
+      return sanitized;
+    };
+
+    const collateralData = sanitizeData(req.body);
+
+    const collateral = await Collateral.create(collateralData);
 
     const collateralWithRelations = await Collateral.findByPk(collateral.id, {
       include: [
@@ -391,6 +426,17 @@ router.post('/', [
     });
   } catch (error) {
     console.error('Create collateral error:', error);
+    // Log to file for debugging
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const logPath = path.join(__dirname, '../error.log');
+      const logEntry = `[${new Date().toISOString()}] POST /api/collaterals ERROR: ${error.stack}\n`;
+      fs.appendFileSync(logPath, logEntry);
+    } catch (logError) {
+      console.error('Failed to write to error log:', logError);
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to create collateral',
@@ -413,7 +459,31 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    await collateral.update(req.body);
+    // Sanitize input: Convert empty strings to null for numeric/date fields
+    const sanitizeData = (data) => {
+      const numericFields = [
+        'appraisal_value', 'land_area', 'building_area', 'year',
+        'insurance_value', 'tax_amount'
+      ];
+      const dateFields = [
+        'certificate_date', 'appraisal_date',
+        'insurance_start_date', 'insurance_end_date', 'tax_due_date'
+      ];
+
+      const sanitized = { ...data };
+
+      numericFields.forEach(field => {
+        if (sanitized[field] === '') sanitized[field] = null;
+      });
+
+      dateFields.forEach(field => {
+        if (sanitized[field] === '') sanitized[field] = null;
+      });
+
+      return sanitized;
+    };
+
+    await collateral.update(sanitizeData(req.body));
 
     const updatedCollateral = await Collateral.findByPk(collateral.id, {
       include: [
@@ -500,11 +570,28 @@ router.post('/:id/documents', upload.single('document'), [
       });
     }
 
+    let filePath = '';
+    let publicUrl = '';
+
+    // Check if Supabase is configured and use it
+    if (isSupabaseConfigured) {
+      const uploadResult = await uploadFile(req.file, 'collaterals');
+      filePath = uploadResult.path; // Store the storage path
+      publicUrl = uploadResult.publicUrl;
+    } else {
+      // Fallback or error if no local storage logic is desired in production
+      // For now, if no supabase, we can't save file since we removed local disk storage for this route
+      return res.status(500).json({
+        success: false,
+        message: 'Storage not configured'
+      });
+    }
+
     const document = await Document.create({
       collateral_id: req.params.id,
       document_type: req.body.document_type,
       document_name: req.body.document_name,
-      file_path: req.file.path,
+      file_path: publicUrl, // Store public URL for easy access
       file_size: req.file.size,
       mime_type: req.file.mimetype,
       original_filename: req.file.originalname,

@@ -56,7 +56,11 @@ const Login: React.FC = () => {
     try {
       await login(formData.username, formData.password);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      console.error('Login Error:', err);
+      // Show detailed error for debugging
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
+      const errorDetails = err.response?.data?.error ? ` (${err.response.data.error})` : '';
+      setError(`${errorMessage}${errorDetails}`);
     } finally {
       setLoading(false);
     }

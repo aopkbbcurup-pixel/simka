@@ -57,6 +57,11 @@ const corsOptions = {
       return callback(null, true);
     }
 
+    // Allow Vercel deployments
+    if (/\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
     logger.warn(`CORS: allowing unlisted origin ${origin}`);
     return callback(null, true);
   },
@@ -83,6 +88,9 @@ app.use('/api/', limiter);
 app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) } }));
 
 // Static files for uploaded documents
+// Static files for uploaded documents (Fallback for local dev or legacy files)
+// In production with Supabase, this might not be needed for new files, 
+// but kept for backward compatibility if any files remain local.
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Debug environment variables (do not log secrets)
@@ -91,7 +99,7 @@ logger.info('Environment file path: %s', path.join(__dirname, '.env'));
 
 // Initialize database
 const { syncDatabase } = require('./models');
-syncDatabase();
+// syncDatabase(); // Disable auto-sync on module load for serverless compatibility
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -110,6 +118,23 @@ app.use('/api/document-templates', require('./routes/document-templates'));
 app.use('/api/documents', require('./routes/documents'));
 app.use('/api/audit', require('./routes/audit'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/debug-diagnose', require('./routes/debug'));
+
+// Test Endpoints (Monolithic)
+app.get('/api/hello', (req, res) => {
+  res.json({ message: 'Hello from Express Monolith!', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/test', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Express Monolith is working!',
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      HAS_DB_HOST: !!process.env.DB_HOST
+    }
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -140,11 +165,13 @@ app.use('*', (req, res) => {
 
 // Start server only if run directly
 if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`🚀 SIMKA Server running on port ${PORT}`);
-    logger.info(`📊 Dashboard: http://localhost:${PORT}/api/health`);
-    logger.info(`🌐 Network access: http://0.0.0.0:${PORT}/api/health`);
-    logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  syncDatabase().then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      logger.info(`🚀 SIMKA Server running on port ${PORT}`);
+      logger.info(`📊 Dashboard: http://localhost:${PORT}/api/health`);
+      logger.info(`🌐 Network access: http://0.0.0.0:${PORT}/api/health`);
+      logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
   });
 }
 
