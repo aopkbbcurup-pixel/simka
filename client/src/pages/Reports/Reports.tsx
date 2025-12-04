@@ -249,9 +249,9 @@ const Reports: React.FC = () => {
         </head>
         <body>
           <div class="header">
-            <h1>PT. BANK SIMKA INDONESIA</h1>
-            <h2>Sistem Informasi Manajemen Kredit & Agunan</h2>
-            <p>Jl. Jend. Sudirman No. 123, Jakarta Pusat - Indonesia</p>
+            <h1>BANK BENGKULU</h1>
+            <h2>CABANG CURUP</h2>
+            <p>Jl. Basuki Rahmat, Curup, Kab. Rejang Lebong - Bengkulu</p>
           </div>
 
           <div class="report-info">
