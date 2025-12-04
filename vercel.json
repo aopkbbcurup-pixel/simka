@@ -1,6 +1,6 @@
 {
-    "buildCommand": "npm install --legacy-peer-deps && npm run build",
-    "outputDirectory": "client/build",
+    "buildCommand": "npm run vercel-build",
+    "outputDirectory": "build",
     "installCommand": "npm install --legacy-peer-deps",
     "framework": null,
     "rewrites": [
