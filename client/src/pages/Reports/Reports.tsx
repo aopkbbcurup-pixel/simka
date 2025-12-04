@@ -251,7 +251,7 @@ const Reports: React.FC = () => {
           <div class="header">
             <h1>BANK BENGKULU</h1>
             <h2>CABANG CURUP</h2>
-            <p>Jl. Basuki Rahmat, Curup, Kab. Rejang Lebong - Bengkulu</p>
+            <p>Jl. S. Sukowati No. 06, Kel. Air Putih Lama, Curup, Kab. Rejang Lebong - Bengkulu</p>
           </div>
 
           <div class="report-info">
