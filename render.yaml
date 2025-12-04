@@ -1,6 +1,7 @@
 services:
   - type: web
     name: simka-server
+    rootDir: server
     env: node
     plan: free
     buildCommand: npm install
