@@ -473,6 +473,8 @@ const Dashboard: React.FC = () => {
                     dataKey="count"
                     fill="url(#barGradient)"
                     radius={[8, 8, 0, 0]}
+                    barSize={60}
+                    maxBarSize={80}
                     animationDuration={1000}
                     isAnimationActive={true}
                   />
@@ -494,12 +496,10 @@ const Dashboard: React.FC = () => {
                     data={creditStatusData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
+                    innerRadius={80}
+                    outerRadius={110}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine={false}
                     animationDuration={1000}
                     isAnimationActive={true}
                   >
