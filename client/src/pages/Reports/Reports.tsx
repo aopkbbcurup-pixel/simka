@@ -150,32 +150,32 @@ const Reports: React.FC = () => {
     if (selectedReport?.movementType) {
       params.set('movement_type', selectedReport.movementType);
     }
-    
+
     // Use fetch to handle downloads that require auth headers
     fetch(`${API_BASE_URL}/reports/${selectedReport?.endpoint || reportType}?${params.toString()}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok.');
-      }
-      return response.blob();
-    })
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `laporan-${reportType}-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    })
-    .catch(err => {
-      console.error('Download error:', err);
-      setError('Gagal mengunduh laporan. Pastikan Anda telah generate laporan terlebih dahulu.');
-    });
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok.');
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `laporan-${reportType}-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      })
+      .catch(err => {
+        console.error('Download error:', err);
+        setError('Gagal mengunduh laporan. Pastikan Anda telah generate laporan terlebih dahulu.');
+      });
   };
 
   const printReport = () => {
@@ -183,31 +183,121 @@ const Reports: React.FC = () => {
     const printContent = reportRef.current.innerHTML;
     const printWindow = window.open('', '_blank', 'width=900,height=650');
     if (!printWindow) return;
+
+    const reportTitle = reportTypes.find(r => r.value === reportType)?.label || '';
+    const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
     printWindow.document.write(`
       <html>
         <head>
-          <title>Laporan ${reportTypes.find(r => r.value === reportType)?.label || ''}</title>
+          <title>${reportTitle}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 24px; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #999; padding: 6px 10px; font-size: 12px; }
-            th { background: #f1f1f1; }
-            h2 { margin-top: 0; }
+            body { 
+              font-family: 'Times New Roman', Times, serif; 
+              margin: 40px; 
+              color: #000;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 3px double #000;
+              padding-bottom: 10px;
+            }
+            .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+            .header h2 { margin: 5px 0; font-size: 16px; font-weight: normal; }
+            .header p { margin: 0; font-size: 12px; font-style: italic; }
+            
+            .report-info {
+              margin-bottom: 20px;
+            }
+            .report-info table { width: auto; border: none; }
+            .report-info td { border: none; padding: 2px 10px 2px 0; font-weight: bold; }
+            .report-info td:last-child { font-weight: normal; }
+
+            table.data-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-bottom: 30px;
+            }
+            table.data-table th, table.data-table td { 
+              border: 1px solid #000; 
+              padding: 8px; 
+              font-size: 12px; 
+              text-align: left;
+            }
+            table.data-table th { 
+              background-color: #f0f0f0; 
+              font-weight: bold; 
+              text-align: center;
+            }
+            
+            .footer {
+              margin-top: 50px;
+              display: flex;
+              justify-content: space-between;
+              page-break-inside: avoid;
+            }
+            .signature-box {
+              text-align: center;
+              width: 200px;
+            }
+            .signature-line {
+              margin-top: 60px;
+              border-top: 1px solid #000;
+            }
           </style>
         </head>
         <body>
-          <h2>${reportTypes.find(r => r.value === reportType)?.label || ''}</h2>
-          <div>Generated: ${new Date().toLocaleString('id-ID')}</div>
-          ${selectedReport?.dateMode === 'range' ? `<div>Periode: ${formatDate(startDate)} s/d ${formatDate(endDate)}</div>` : ''}
-          <div style="margin:16px 0;">Data: ${reportData.length} baris</div>
+          <div class="header">
+            <h1>PT. BANK SIMKA INDONESIA</h1>
+            <h2>Sistem Informasi Manajemen Kredit & Agunan</h2>
+            <p>Jl. Jend. Sudirman No. 123, Jakarta Pusat - Indonesia</p>
+          </div>
+
+          <div class="report-info">
+            <table>
+              <tr>
+                <td>Laporan:</td>
+                <td>${reportTitle}</td>
+              </tr>
+              <tr>
+                <td>Tanggal Cetak:</td>
+                <td>${currentDate}</td>
+              </tr>
+              ${selectedReport?.dateMode === 'range' ? `
+              <tr>
+                <td>Periode:</td>
+                <td>${formatDate(startDate)} s/d ${formatDate(endDate)}</td>
+              </tr>` : ''}
+              <tr>
+                <td>Total Data:</td>
+                <td>${reportData.length} Baris</td>
+              </tr>
+            </table>
+          </div>
+
           ${printContent}
+
+          <div class="footer">
+            <div class="signature-box">
+              <p>Dibuat Oleh,</p>
+              <div class="signature-line">Staff Admin</div>
+            </div>
+            <div class="signature-box">
+              <p>Disetujui Oleh,</p>
+              <div class="signature-line">Kepala Cabang</div>
+            </div>
+          </div>
         </body>
       </html>
     `);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.onafterprint = () => printWindow.close();
-    printWindow.print();
+    // Small delay to ensure styles are loaded
+    setTimeout(() => {
+      printWindow.print();
+      // printWindow.close(); // Optional: close after print
+    }, 500);
   };
 
   const formatCurrency = (amount: number) => {
@@ -227,11 +317,12 @@ const Reports: React.FC = () => {
   const renderReportTable = () => {
     if (!reportData.length) return null;
 
-    switch (reportType) {
-      case 'insurance-expiry':
-        return (
-          <TableContainer component={Paper}>
-            <Table size="small">
+    // Helper to render table content
+    const renderContent = () => {
+      switch (reportType) {
+        case 'insurance-expiry':
+          return (
+            <>
               <TableHead>
                 <TableRow>
                   <TableCell>Nama Debitur</TableCell>
@@ -249,23 +340,22 @@ const Reports: React.FC = () => {
                     <TableCell>{row.collateral_code}</TableCell>
                     <TableCell>{formatDate(row.insurance_end_date)}</TableCell>
                     <TableCell>
-                      <Chip 
+                      <Chip
                         label={`${row.days_until_expiry} hari`}
                         color={row.days_until_expiry <= 30 ? 'error' : 'warning'}
                         size="small"
+                        variant="outlined" // Use outlined for better print contrast
                       />
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          </TableContainer>
-        );
-      case 'file-movements-out':
-      case 'file-movements-in':
-        return (
-          <TableContainer component={Paper}>
-            <Table size="small">
+            </>
+          );
+        case 'file-movements-out':
+        case 'file-movements-in':
+          return (
+            <>
               <TableHead>
                 <TableRow>
                   <TableCell>Tanggal</TableCell>
@@ -282,22 +372,23 @@ const Reports: React.FC = () => {
                   <TableCell>Catatan</TableCell>
                 </TableRow>
               </TableHead>
-                <TableBody>
-                  {reportData.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{formatDate(row.movement_date)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.movement_type === 'IN' ? 'Masuk' : 'Keluar'}
-                          color={row.movement_type === 'IN' ? 'success' : 'warning'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{row.movement_time}</TableCell>
-                      <TableCell>{row.contract_number}</TableCell>
-                      <TableCell>{row.debtor_name}</TableCell>
-                      <TableCell>{row.collateral_code}</TableCell>
-                      <TableCell>{row.responsible_officer}</TableCell>
+              <TableBody>
+                {reportData.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{formatDate(row.movement_date)}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={row.movement_type === 'IN' ? 'Masuk' : 'Keluar'}
+                        color={row.movement_type === 'IN' ? 'success' : 'warning'}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell>{row.movement_time}</TableCell>
+                    <TableCell>{row.contract_number}</TableCell>
+                    <TableCell>{row.debtor_name}</TableCell>
+                    <TableCell>{row.collateral_code}</TableCell>
+                    <TableCell>{row.responsible_officer}</TableCell>
                     <TableCell>{row.released_to}</TableCell>
                     <TableCell>{row.received_by}</TableCell>
                     <TableCell>{row.expected_return_date ? formatDate(row.expected_return_date) : '-'}</TableCell>
@@ -306,46 +397,41 @@ const Reports: React.FC = () => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          </TableContainer>
-        );
-      case 'unpaid-claims':
-        return (
-            <TableContainer component={Paper}>
-            <Table size="small">
-                <TableHead>
+            </>
+          );
+        case 'unpaid-claims':
+          return (
+            <>
+              <TableHead>
                 <TableRow>
-                    <TableCell>No. Klaim</TableCell>
-                    <TableCell>Nama Debitur</TableCell>
-                    <TableCell>No. Polis</TableCell>
-                    <TableCell>Tgl. Klaim</TableCell>
-                    <TableCell>Jumlah</TableCell>
-                    <TableCell>Status</TableCell>
+                  <TableCell>No. Klaim</TableCell>
+                  <TableCell>Nama Debitur</TableCell>
+                  <TableCell>No. Polis</TableCell>
+                  <TableCell>Tgl. Klaim</TableCell>
+                  <TableCell>Jumlah</TableCell>
+                  <TableCell>Status</TableCell>
                 </TableRow>
-                </TableHead>
-                <TableBody>
+              </TableHead>
+              <TableBody>
                 {reportData.map((row, index) => (
-                    <TableRow key={index}>
+                  <TableRow key={index}>
                     <TableCell>{row.claim_number}</TableCell>
                     <TableCell>{row.debtor_name}</TableCell>
                     <TableCell>{row.policy_number}</TableCell>
                     <TableCell>{formatDate(row.claim_date)}</TableCell>
                     <TableCell>{formatCurrency(row.claim_amount)}</TableCell>
                     <TableCell>
-                        <Chip label={row.claim_status} size="small" />
+                      <Chip label={row.claim_status} size="small" variant="outlined" />
                     </TableCell>
-                    </TableRow>
+                  </TableRow>
                 ))}
-                </TableBody>
-            </Table>
-            </TableContainer>
-        );
-      default:
-        // A generic table for other reports
-        const headers = reportData.length > 0 ? Object.keys(reportData[0]) : [];
-        return (
-          <TableContainer component={Paper}>
-            <Table size="small">
+              </TableBody>
+            </>
+          );
+        default:
+          const headers = reportData.length > 0 ? Object.keys(reportData[0]) : [];
+          return (
+            <>
               <TableHead>
                 <TableRow>
                   {headers.map(header => <TableCell key={header}>{header.replace(/_/g, ' ').toUpperCase()}</TableCell>)}
@@ -358,10 +444,19 @@ const Reports: React.FC = () => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          </TableContainer>
-        );
-    }
+            </>
+          );
+      }
+    };
+
+    // Use a specific class for the print table
+    return (
+      <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0' }}>
+        <Table size="small" className="data-table">
+          {renderContent()}
+        </Table>
+      </TableContainer>
+    );
   };
 
   return (
@@ -378,7 +473,7 @@ const Reports: React.FC = () => {
                 <Assessment sx={{ mr: 1 }} />
                 Konfigurasi Laporan
               </Typography>
-              
+
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Jenis Laporan</InputLabel>
                 <Select
@@ -518,9 +613,9 @@ const Reports: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Hasil Laporan
               </Typography>
-              
+
               {loading && <CircularProgress />}
-              
+
               {error && <Alert severity="error">{error}</Alert>}
 
               {!loading && !error && reportData.length === 0 && (
@@ -530,11 +625,13 @@ const Reports: React.FC = () => {
               )}
 
               {reportData.length > 0 && (
-                <Box ref={reportRef}>
+                <Box>
                   <Alert severity="success" sx={{ mb: 2 }}>
                     Laporan berhasil dibuat dengan {reportData.length} data.
                   </Alert>
-                  {renderReportTable()}
+                  <Box ref={reportRef}>
+                    {renderReportTable()}
+                  </Box>
                 </Box>
               )}
             </CardContent>
