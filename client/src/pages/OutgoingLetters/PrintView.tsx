@@ -44,16 +44,16 @@ const PrintView: React.FC<PrintViewProps> = ({ letters, title, year, printRef })
             {/* Professional Header / Letterhead */}
             <Box sx={{ textAlign: 'center', mb: 3, borderBottom: '3px double #000', pb: 2 }}>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a237e', mb: 0.5 }}>
-                    KOPERASI SIMPAN PINJAM
+                    PT. BANK PEMBANGUNAN DAERAH BENGKULU
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1a237e', letterSpacing: 2 }}>
-                    BINA BERSAMA CURUP
+                    CABANG CURUP
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 1, color: '#555' }}>
-                    Jl. Merdeka No. 123, Curup, Rejang Lebong, Bengkulu 39119
+                    Jl. Merdeka No. 01, Curup, Rejang Lebong, Bengkulu 39119
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#555' }}>
-                    Telp: (0732) 21234 | Email: ksp.binabersama@gmail.com
+                    Telp: (0732) 21234 | Email: cabang.curup@bankbengkulu.co.id
                 </Typography>
             </Box>
 
