@@ -20,11 +20,13 @@ import {
 } from '../../hooks/queries/useOutgoingLetters';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../../utils/api';
+import PrintView from './PrintView';
 
 const OutgoingLettersPage: React.FC = () => {
     const queryClient = useQueryClient();
     const currentYear = new Date().getFullYear();
     const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+    const printRef = useRef<HTMLDivElement>(null);
 
     // Filter states
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +43,7 @@ const OutgoingLettersPage: React.FC = () => {
     const [openTemplateDialog, setOpenTemplateDialog] = useState(false);
     const [openSignDialog, setOpenSignDialog] = useState(false);
     const [openSendDialog, setOpenSendDialog] = useState(false);
+    const [openPrintDialog, setOpenPrintDialog] = useState(false);
     const [selectedLetter, setSelectedLetter] = useState<OutgoingLetter | null>(null);
     const [selectedType, setSelectedType] = useState<'eksternal' | 'internal'>('eksternal');
     const [previewLetter, setPreviewLetter] = useState<OutgoingLetter | null>(null);
@@ -183,7 +186,42 @@ const OutgoingLettersPage: React.FC = () => {
         catch (e) { console.error(e); }
     };
 
-    const handlePrint = () => { window.print(); };
+    const handlePrint = () => {
+        setOpenPrintDialog(true);
+    };
+
+    const executePrint = () => {
+        if (printRef.current) {
+            const printContent = printRef.current.innerHTML;
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            if (printWindow) {
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Buku Agenda Surat Keluar - ${yearFilter}</title>
+                        <style>
+                            @page { size: A4; margin: 15mm; }
+                            body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                            th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
+                            th { background-color: #e3f2fd; font-weight: bold; }
+                            tr:nth-child(even) { background-color: #fafafa; }
+                            .header { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 15px; }
+                            .title { font-weight: bold; text-decoration: underline; text-transform: uppercase; }
+                            .footer { margin-top: 20px; text-align: center; font-size: 9pt; color: #888; border-top: 1px solid #ccc; padding-top: 10px; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+            }
+        }
+        setOpenPrintDialog(false);
+    };
 
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     const getStatusChip = (status: string) => {
@@ -504,6 +542,28 @@ const OutgoingLettersPage: React.FC = () => {
                     <Button onClick={() => { if (signatureCanvasRef.current) { const ctx = signatureCanvasRef.current.getContext('2d'); if (ctx) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 400, 150); } } }}>Hapus</Button>
                     <Button onClick={() => setOpenSignDialog(false)}>Batal</Button>
                     <Button onClick={handleSign} variant="contained" disabled={signMutation.isPending} startIcon={<Draw />}>Simpan Tanda Tangan</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Print Dialog */}
+            <Dialog open={openPrintDialog} onClose={() => setOpenPrintDialog(false)} maxWidth="lg" fullWidth>
+                <DialogTitle>🖨️ Cetak Buku Agenda Surat Keluar</DialogTitle>
+                <DialogContent>
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        Preview dokumen yang akan dicetak. Klik "Cetak" untuk membuka dialog print browser.
+                    </Alert>
+                    <Paper elevation={3} sx={{ maxHeight: '60vh', overflow: 'auto', bgcolor: '#fff' }}>
+                        <PrintView
+                            letters={letters}
+                            title="Buku Agenda Surat Keluar"
+                            year={yearFilter}
+                            printRef={printRef}
+                        />
+                    </Paper>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenPrintDialog(false)}>Batal</Button>
+                    <Button onClick={executePrint} variant="contained" startIcon={<Print />}>Cetak</Button>
                 </DialogActions>
             </Dialog>
         </Box>
