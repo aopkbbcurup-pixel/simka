@@ -40,15 +40,15 @@ const upload = multer({
 });
 
 // Helper function to generate letter number
+// Gets next sequence based on existing letters (deleted letters' numbers are reusable)
 async function generateLetterNumber(type) {
     const year = new Date().getFullYear();
     const typeCode = type === 'eksternal' ? 'S.Eks' : 'S.Int';
 
-    // Check ALL letters (including soft-deleted) to avoid unique constraint violation
+    // Only check existing/active letters - deleted letters' numbers can be reused
     const lastLetter = await OutgoingLetter.findOne({
-        where: { letter_type: type, year },  // Removed is_active filter
-        order: [['sequence_number', 'DESC']],
-        paranoid: false  // Include soft-deleted records
+        where: { letter_type: type, year, is_active: true },
+        order: [['sequence_number', 'DESC']]
     });
 
     const nextSeq = lastLetter ? lastLetter.sequence_number + 1 : 1;
@@ -56,7 +56,7 @@ async function generateLetterNumber(type) {
     const config = await LetterConfiguration.findOne({ where: { is_default: true } });
     const unitCode = config?.unit_code || 'AOPK/C.2';
 
-    console.log(`Generated sequence for ${type} ${year}: ${nextSeq} (last was: ${lastLetter?.sequence_number || 'none'})`);
+    console.log(`Generated sequence for ${type} ${year}: ${nextSeq} (last active was: ${lastLetter?.sequence_number || 'none'})`);
 
     return {
         sequence_number: nextSeq,
@@ -453,7 +453,7 @@ router.put('/:id', authenticateToken, [
     }
 });
 
-// Delete letter (soft delete)
+// Delete letter (hard delete - allows number reuse)
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const letter = await OutgoingLetter.findOne({ where: { id: req.params.id, is_active: true } });
@@ -461,7 +461,8 @@ router.delete('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Outgoing letter not found' });
         }
 
-        await letter.update({ is_active: false });
+        // Hard delete - this allows the letter number/sequence to be reused
+        await letter.destroy();
         res.json({ success: true, message: 'Outgoing letter deleted successfully' });
     } catch (error) {
         console.error('Error deleting outgoing letter:', error);

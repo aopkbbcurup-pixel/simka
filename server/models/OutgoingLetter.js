@@ -162,11 +162,8 @@ const OutgoingLetter = sequelize.define('OutgoingLetter', {
         },
         {
             fields: ['created_by']
-        },
-        {
-            unique: true,
-            fields: ['letter_type', 'year', 'sequence_number']
         }
+        // Removed unique constraint on (letter_type, year, sequence_number) to allow number reuse
     ]
 });
 
