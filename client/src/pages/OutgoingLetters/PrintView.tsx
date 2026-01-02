@@ -50,7 +50,7 @@ const PrintView: React.FC<PrintViewProps> = ({ letters, title, year, printRef })
                     CABANG CURUP
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 1, color: '#555' }}>
-                    Jl. Merdeka No. 01, Curup, Rejang Lebong, Bengkulu 39119
+                    Jl. S Sukowati No. 06, Curup, Rejang Lebong, Bengkulu 39112
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#555' }}>
                     Telp: (0732) 21234 | Email: cabang.curup@bankbengkulu.co.id
