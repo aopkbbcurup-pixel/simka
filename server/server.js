@@ -118,6 +118,7 @@ app.use('/api/document-templates', require('./routes/document-templates'));
 app.use('/api/documents', require('./routes/documents'));
 app.use('/api/audit', require('./routes/audit'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/outgoing-letters', require('./routes/outgoing-letters'));
 app.use('/api/debug-diagnose', require('./routes/debug'));
 
 // Test Endpoints (Monolithic)

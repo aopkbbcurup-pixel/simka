@@ -19,6 +19,7 @@ import Profile from './pages/Profile/Profile';
 import Users from './pages/Users/Users';
 import VaultPOS from './pages/VaultPOS/VaultPOS';
 import AuditLogs from './pages/AuditLogs/AuditLogs';
+import OutgoingLetters from './pages/OutgoingLetters/OutgoingLetters';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 const theme = createTheme({
@@ -167,6 +168,7 @@ function App() {
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/users" element={<Users />} />
                     <Route path="/audit-logs" element={<AuditLogs />} />
+                    <Route path="/outgoing-letters" element={<OutgoingLetters />} />
                   </Route>
                 </Routes>
               </Router>

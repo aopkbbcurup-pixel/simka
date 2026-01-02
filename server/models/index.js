@@ -11,6 +11,9 @@ const InsuranceClaim = require('./InsuranceClaim');
 const Payment = require('./Payment');
 const CreditFileMovement = require('./CreditFileMovement');
 const AuditLog = require('./AuditLog');
+const OutgoingLetter = require('./OutgoingLetter');
+const LetterConfiguration = require('./LetterConfiguration');
+const LetterContentTemplate = require('./LetterContentTemplate');
 
 // Define associations
 // Define associations
@@ -70,6 +73,31 @@ if (sequelize) {
   // AuditLog associations
   User.hasMany(AuditLog, { foreignKey: 'user_id' });
   AuditLog.belongsTo(User, { foreignKey: 'user_id' });
+
+  // OutgoingLetter associations
+  User.hasMany(OutgoingLetter, { as: 'outgoingLetters', foreignKey: 'created_by' });
+  OutgoingLetter.belongsTo(User, { as: 'creator', foreignKey: 'created_by' });
+
+  // LetterConfiguration associations
+  User.hasMany(LetterConfiguration, { as: 'letterConfigurations', foreignKey: 'updated_by' });
+  LetterConfiguration.belongsTo(User, { as: 'updater', foreignKey: 'updated_by' });
+
+  // LetterContentTemplate associations
+  User.hasMany(LetterContentTemplate, { as: 'letterContentTemplates', foreignKey: 'created_by' });
+  LetterContentTemplate.belongsTo(User, { as: 'creator', foreignKey: 'created_by' });
+
+  // OutgoingLetter - Debtor/Credit associations
+  Debtor.hasMany(OutgoingLetter, { as: 'outgoingLetters', foreignKey: 'debtor_id' });
+  OutgoingLetter.belongsTo(Debtor, { as: 'debtor', foreignKey: 'debtor_id' });
+
+  Credit.hasMany(OutgoingLetter, { as: 'outgoingLetters', foreignKey: 'credit_id' });
+  OutgoingLetter.belongsTo(Credit, { as: 'credit', foreignKey: 'credit_id' });
+
+  LetterContentTemplate.hasMany(OutgoingLetter, { foreignKey: 'template_id' });
+  OutgoingLetter.belongsTo(LetterContentTemplate, { as: 'template', foreignKey: 'template_id' });
+
+  // Signer association
+  OutgoingLetter.belongsTo(User, { as: 'signer', foreignKey: 'signed_by' });
 } else {
   console.warn('⚠️  Skipping model associations because database connection is missing.');
 }
@@ -101,5 +129,8 @@ module.exports = {
   Payment,
   CreditFileMovement,
   AuditLog,
+  OutgoingLetter,
+  LetterConfiguration,
+  LetterContentTemplate,
   syncDatabase
 };

@@ -32,6 +32,7 @@ import {
   AdminPanelSettings,
   Inventory2,
   History,
+  Send,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -92,6 +93,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Klaim Asuransi', icon: <Assignment />, path: '/insurance-claims' },
     { text: 'Laporan', icon: <Assessment />, path: '/reports' },
     { text: 'POS Brankas', icon: <Inventory2 />, path: '/vault-pos' },
+    { text: 'Surat Keluar', icon: <Send />, path: '/outgoing-letters' },
   ];
 
   const drawer = (
