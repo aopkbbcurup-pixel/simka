@@ -44,15 +44,19 @@ async function generateLetterNumber(type) {
     const year = new Date().getFullYear();
     const typeCode = type === 'eksternal' ? 'S.Eks' : 'S.Int';
 
+    // Check ALL letters (including soft-deleted) to avoid unique constraint violation
     const lastLetter = await OutgoingLetter.findOne({
-        where: { letter_type: type, year, is_active: true },
-        order: [['sequence_number', 'DESC']]
+        where: { letter_type: type, year },  // Removed is_active filter
+        order: [['sequence_number', 'DESC']],
+        paranoid: false  // Include soft-deleted records
     });
 
     const nextSeq = lastLetter ? lastLetter.sequence_number + 1 : 1;
 
     const config = await LetterConfiguration.findOne({ where: { is_default: true } });
     const unitCode = config?.unit_code || 'AOPK/C.2';
+
+    console.log(`Generated sequence for ${type} ${year}: ${nextSeq} (last was: ${lastLetter?.sequence_number || 'none'})`);
 
     return {
         sequence_number: nextSeq,
