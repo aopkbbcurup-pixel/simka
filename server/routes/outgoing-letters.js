@@ -367,12 +367,18 @@ router.post('/', authenticateToken, [
         // Sanitize input - remove empty strings for UUID fields
         const sanitizedBody = { ...req.body };
         ['debtor_id', 'credit_id', 'template_id', 'signed_by'].forEach(field => {
-            if (sanitizedBody[field] === '' || sanitizedBody[field] === null) {
+            if (sanitizedBody[field] === '' || sanitizedBody[field] === null || sanitizedBody[field] === undefined) {
                 delete sanitizedBody[field];
             }
         });
-        // Remove empty strings for date fields
-        if (sanitizedBody.followup_date === '') delete sanitizedBody.followup_date;
+        // Remove empty strings for date and optional string fields
+        ['followup_date', 'email_recipient', 'recipient_address', 'content', 'notes'].forEach(field => {
+            if (sanitizedBody[field] === '') delete sanitizedBody[field];
+        });
+        // Convert needs_followup to proper boolean if it's a string
+        if (typeof sanitizedBody.needs_followup === 'string') {
+            sanitizedBody.needs_followup = sanitizedBody.needs_followup === 'true';
+        }
 
         console.log('Sanitized body:', JSON.stringify(sanitizedBody, null, 2));
 
